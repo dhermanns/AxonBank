@@ -16,16 +16,31 @@
 
 package org.axonframework.samples.bank.config;
 
+import org.axonframework.commandhandling.model.Repository;
 import org.axonframework.eventhandling.EventBus;
+import org.axonframework.eventsourcing.EventCountSnapshotTriggerDefinition;
+import org.axonframework.eventsourcing.EventSourcingRepository;
+import org.axonframework.eventsourcing.GenericAggregateFactory;
+import org.axonframework.eventsourcing.Snapshotter;
+import org.axonframework.eventsourcing.eventstore.EventStore;
 import org.axonframework.samples.bank.command.BankAccount;
 import org.axonframework.samples.bank.command.BankAccountCommandHandler;
+import org.axonframework.serialization.Serializer;
+import org.axonframework.serialization.json.JacksonSerializer;
 import org.axonframework.spring.config.AxonConfiguration;
+import org.axonframework.spring.eventsourcing.SpringAggregateSnapshotterFactoryBean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 @Configuration
+@EnableAspectJAutoProxy(proxyTargetClass=true)
 public class AxonConfig {
+
+    private Logger logger = LoggerFactory.getLogger(AxonConfig.class);
 
     @Autowired
     private AxonConfiguration axonConfiguration;
@@ -33,7 +48,32 @@ public class AxonConfig {
     private EventBus eventBus;
 
     @Bean
-    public BankAccountCommandHandler bankAccountCommandHandler() {
-        return new BankAccountCommandHandler(axonConfiguration.repository(BankAccount.class), eventBus);
+    public BankAccountCommandHandler bankAccountCommandHandler(EventStore eventStore, Snapshotter snapshotter) {
+
+        Repository<BankAccount> bankAccountRepository = bankAccountRepository2(eventStore, snapshotter);
+
+        return new BankAccountCommandHandler(bankAccountRepository, eventBus);
+    }
+
+    @Bean
+    public Repository<BankAccount> bankAccountRepository2(EventStore eventStore, Snapshotter snapshotter) {
+
+        axonConfiguration.repository(BankAccount.class);
+        Repository<BankAccount> bankAccount =
+            new EventSourcingRepository<>(
+                new GenericAggregateFactory<>(BankAccount.class), eventStore,
+                new EventCountSnapshotTriggerDefinition(snapshotter, 5));
+
+        return bankAccount;
+    }
+
+    @Bean
+    public SpringAggregateSnapshotterFactoryBean snapshotter() {
+        return new SpringAggregateSnapshotterFactoryBean();
+    }
+
+    @Bean
+    public Serializer serializer() {
+        return new JacksonSerializer();
     }
 }

@@ -28,6 +28,7 @@ import org.axonframework.samples.bank.api.bankaccount.MoneyWithdrawnEvent;
 import org.axonframework.samples.bank.api.bankaccount.SourceBankAccountDebitRejectedEvent;
 import org.axonframework.samples.bank.api.bankaccount.SourceBankAccountDebitedEvent;
 import org.axonframework.spring.stereotype.Aggregate;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 import static org.axonframework.commandhandling.model.AggregateLifecycle.apply;
 
