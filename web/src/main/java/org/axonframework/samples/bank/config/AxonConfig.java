@@ -17,16 +17,23 @@
 package org.axonframework.samples.bank.config;
 
 import org.axonframework.commandhandling.model.Repository;
+import org.axonframework.common.jpa.EntityManagerProvider;
+import org.axonframework.common.jpa.SimpleEntityManagerProvider;
+import org.axonframework.common.transaction.NoTransactionManager;
 import org.axonframework.eventhandling.EventBus;
 import org.axonframework.eventsourcing.EventCountSnapshotTriggerDefinition;
 import org.axonframework.eventsourcing.EventSourcingRepository;
 import org.axonframework.eventsourcing.GenericAggregateFactory;
 import org.axonframework.eventsourcing.Snapshotter;
+import org.axonframework.eventsourcing.eventstore.EventStorageEngine;
 import org.axonframework.eventsourcing.eventstore.EventStore;
+import org.axonframework.eventsourcing.eventstore.jpa.JpaEventStorageEngine;
 import org.axonframework.samples.bank.command.BankAccount;
 import org.axonframework.samples.bank.command.BankAccountCommandHandler;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.json.JacksonSerializer;
+import org.axonframework.serialization.upcasting.event.EventUpcaster;
+import org.axonframework.serialization.upcasting.event.NoOpEventUpcaster;
 import org.axonframework.spring.config.AxonConfiguration;
 import org.axonframework.spring.eventsourcing.SpringAggregateSnapshotterFactoryBean;
 import org.slf4j.Logger;
@@ -35,6 +42,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceContext;
+import javax.sql.DataSource;
+import java.sql.SQLException;
 
 @Configuration
 @EnableAspectJAutoProxy(proxyTargetClass=true)
@@ -46,6 +59,15 @@ public class AxonConfig {
     private AxonConfiguration axonConfiguration;
     @Autowired
     private EventBus eventBus;
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Bean
+    public EventStorageEngine eventStorageEngine(DataSource dataSource) throws SQLException {
+
+        EntityManagerProvider entityManagerProvider = new SimpleEntityManagerProvider(entityManager);
+        return new JpaEventStorageEngine(serializer(), NoOpEventUpcaster.INSTANCE, dataSource, entityManagerProvider, NoTransactionManager.INSTANCE);
+    }
 
     @Bean
     public BankAccountCommandHandler bankAccountCommandHandler(EventStore eventStore, Snapshotter snapshotter) {
