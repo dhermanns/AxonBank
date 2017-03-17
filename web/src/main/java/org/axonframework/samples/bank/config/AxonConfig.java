@@ -32,7 +32,6 @@ import org.axonframework.samples.bank.command.BankAccount;
 import org.axonframework.samples.bank.command.BankAccountCommandHandler;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.json.JacksonSerializer;
-import org.axonframework.serialization.upcasting.event.EventUpcaster;
 import org.axonframework.serialization.upcasting.event.NoOpEventUpcaster;
 import org.axonframework.spring.config.AxonConfiguration;
 import org.axonframework.spring.eventsourcing.SpringAggregateSnapshotterFactoryBean;
@@ -44,11 +43,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 
+@SuppressWarnings("SpringJavaAutowiringInspection")
 @Configuration
 @EnableAspectJAutoProxy(proxyTargetClass=true)
 public class AxonConfig {
@@ -62,12 +61,12 @@ public class AxonConfig {
     @PersistenceContext
     private EntityManager entityManager;
 
-    @Bean
-    public EventStorageEngine eventStorageEngine(DataSource dataSource) throws SQLException {
-
-        EntityManagerProvider entityManagerProvider = new SimpleEntityManagerProvider(entityManager);
-        return new JpaEventStorageEngine(serializer(), NoOpEventUpcaster.INSTANCE, dataSource, entityManagerProvider, NoTransactionManager.INSTANCE);
-    }
+//    @Bean
+//    public EventStorageEngine eventStorageEngine(DataSource dataSource) throws SQLException {
+//
+//        EntityManagerProvider entityManagerProvider = new SimpleEntityManagerProvider(entityManager);
+//        return new JpaEventStorageEngine(serializer(), NoOpEventUpcaster.INSTANCE, dataSource, entityManagerProvider, NoTransactionManager.INSTANCE);
+//    }
 
     @Bean
     public BankAccountCommandHandler bankAccountCommandHandler(EventStore eventStore, Snapshotter snapshotter) {

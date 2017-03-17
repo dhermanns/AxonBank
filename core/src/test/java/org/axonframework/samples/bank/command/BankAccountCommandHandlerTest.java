@@ -18,12 +18,7 @@ package org.axonframework.samples.bank.command;
 
 import org.axonframework.messaging.interceptors.BeanValidationInterceptor;
 import org.axonframework.messaging.interceptors.JSR303ViolationException;
-import org.axonframework.samples.bank.api.bankaccount.BankAccountCreatedEvent;
-import org.axonframework.samples.bank.api.bankaccount.CreateBankAccountCommand;
-import org.axonframework.samples.bank.api.bankaccount.DepositMoneyCommand;
-import org.axonframework.samples.bank.api.bankaccount.MoneyDepositedEvent;
-import org.axonframework.samples.bank.api.bankaccount.MoneyWithdrawnEvent;
-import org.axonframework.samples.bank.api.bankaccount.WithdrawMoneyCommand;
+import org.axonframework.samples.bank.api.bankaccount.*;
 import org.axonframework.test.aggregate.AggregateTestFixture;
 import org.axonframework.test.aggregate.FixtureConfiguration;
 import org.junit.*;
@@ -83,5 +78,14 @@ public class BankAccountCommandHandlerTest {
         testFixture.given(new BankAccountCreatedEvent(id, 0), new MoneyDepositedEvent(id, 50))
                    .when(new WithdrawMoneyCommand(id, 51))
                    .expectEvents();
+    }
+
+    @Test
+    public void testCreateSubAccount() throws Exception {
+        String id = "bankAccountId";
+
+        testFixture.given(new BankAccountCreatedEvent(id, 0))
+            .when(new CreateSubBankAccountCommand(id, "willy", 1000))
+            .expectEvents(new SubBankAccountCreatedEvent(id, "willy", 1000));
     }
 }

@@ -21,14 +21,7 @@ import org.axonframework.commandhandling.model.Aggregate;
 import org.axonframework.commandhandling.model.AggregateNotFoundException;
 import org.axonframework.commandhandling.model.Repository;
 import org.axonframework.eventhandling.EventBus;
-import org.axonframework.samples.bank.api.bankaccount.CreateBankAccountCommand;
-import org.axonframework.samples.bank.api.bankaccount.CreditDestinationBankAccountCommand;
-import org.axonframework.samples.bank.api.bankaccount.DebitSourceBankAccountCommand;
-import org.axonframework.samples.bank.api.bankaccount.DepositMoneyCommand;
-import org.axonframework.samples.bank.api.bankaccount.DestinationBankAccountNotFoundEvent;
-import org.axonframework.samples.bank.api.bankaccount.ReturnMoneyOfFailedBankTransferCommand;
-import org.axonframework.samples.bank.api.bankaccount.SourceBankAccountNotFoundEvent;
-import org.axonframework.samples.bank.api.bankaccount.WithdrawMoneyCommand;
+import org.axonframework.samples.bank.api.bankaccount.*;
 
 import static org.axonframework.eventhandling.GenericEventMessage.asEventMessage;
 
@@ -43,8 +36,12 @@ public class BankAccountCommandHandler {
     }
 
     @CommandHandler
-    public void handle(CreateBankAccountCommand command) throws Exception {
-        repository.newInstance(() -> new BankAccount(command.getBankAccountId(), command.getOverdraftLimit()));
+    public void handle(CreateBankAccountCommand command) throws RuntimeException {
+        try {
+            repository.newInstance(() -> new BankAccount(command.getBankAccountId(), command.getOverdraftLimit()));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @CommandHandler
@@ -87,5 +84,11 @@ public class BankAccountCommandHandler {
     public void handle(ReturnMoneyOfFailedBankTransferCommand command) {
         Aggregate<BankAccount> bankAccountAggregate = repository.load(command.getBankAccountId());
         bankAccountAggregate.execute(bankAccount -> bankAccount.returnMoney(command.getAmount()));
+    }
+
+    @CommandHandler
+    public void handle(CreateSubBankAccountCommand command) {
+        Aggregate<BankAccount> bankAccountAggregate = repository.load(command.getBankAccountId());
+        bankAccountAggregate.execute(bankAccount -> bankAccount.addSubBankAccount(command.getName(), command.getBalanceInCents()));
     }
 }

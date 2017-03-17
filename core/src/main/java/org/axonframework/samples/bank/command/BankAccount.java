@@ -18,17 +18,12 @@ package org.axonframework.samples.bank.command;
 
 import org.axonframework.commandhandling.model.AggregateIdentifier;
 import org.axonframework.eventhandling.EventHandler;
-import org.axonframework.samples.bank.api.bankaccount.BankAccountCreatedEvent;
-import org.axonframework.samples.bank.api.bankaccount.DestinationBankAccountCreditedEvent;
-import org.axonframework.samples.bank.api.bankaccount.MoneyAddedEvent;
-import org.axonframework.samples.bank.api.bankaccount.MoneyDepositedEvent;
-import org.axonframework.samples.bank.api.bankaccount.MoneyOfFailedBankTransferReturnedEvent;
-import org.axonframework.samples.bank.api.bankaccount.MoneySubtractedEvent;
-import org.axonframework.samples.bank.api.bankaccount.MoneyWithdrawnEvent;
-import org.axonframework.samples.bank.api.bankaccount.SourceBankAccountDebitRejectedEvent;
-import org.axonframework.samples.bank.api.bankaccount.SourceBankAccountDebitedEvent;
+import org.axonframework.samples.bank.api.bankaccount.*;
 import org.axonframework.spring.stereotype.Aggregate;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.axonframework.commandhandling.model.AggregateLifecycle.apply;
 
@@ -39,6 +34,7 @@ public class BankAccount {
     private String id;
     private long overdraftLimit;
     private long balanceInCents;
+    private List<SubBankAccount> subAccounts = new ArrayList<>();
 
     @SuppressWarnings("unused")
     private BankAccount() {
@@ -46,6 +42,10 @@ public class BankAccount {
 
     public BankAccount(String bankAccountId, long overdraftLimit) {
         apply(new BankAccountCreatedEvent(bankAccountId, overdraftLimit));
+    }
+
+    public void addSubBankAccount(String name, long balanceInCents) {
+        apply(new SubBankAccountCreatedEvent(this.id, name, balanceInCents));
     }
 
     public void deposit(long amount) {
@@ -83,6 +83,11 @@ public class BankAccount {
     }
 
     @EventHandler
+    public void on(SubBankAccountCreatedEvent event) {
+        this.subAccounts.add(new SubBankAccount(this.id, event.getName(), event.getBalanceInCents()));
+    }
+
+    @EventHandler
     public void on(MoneyAddedEvent event) {
         balanceInCents += event.getAmount();
     }
@@ -90,5 +95,13 @@ public class BankAccount {
     @EventHandler
     public void on(MoneySubtractedEvent event) {
         balanceInCents -= event.getAmount();
+    }
+
+    public List<SubBankAccount> getSubAccounts() {
+        return subAccounts;
+    }
+
+    public void setSubAccounts(List<SubBankAccount> subAccounts) {
+        this.subAccounts = subAccounts;
     }
 }
