@@ -45,7 +45,7 @@ public class AxonBankApplicationITest {
 
     @Test
     public void testCreateBigBankAccount() {
-        String bankAccountId = "myBankAccountId";
+        String bankAccountId = UUID.randomUUID().toString();
 
         long startTime = System.currentTimeMillis();
 
