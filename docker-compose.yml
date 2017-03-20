@@ -20,5 +20,9 @@ services:
       - MYSQL_DATABASE=axonbank
     ports:
       - "3306:3306"
+  mongo:
+    image: mongo:3.0.14
+    ports:
+      - "27017:27017"
   rabbitmq:
     build: docker/rabbitmq/

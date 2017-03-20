@@ -53,6 +53,10 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
             <scope>test</scope>
@@ -123,14 +127,19 @@
             <artifactId>axon-bank-core</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
+        <!-- dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>axon-bank-query</artifactId>
             <version>${project.version}</version>
-        </dependency>
+        </dependency !-->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+            <version>1.5.3</version>
         </dependency>
     </dependencies>
 

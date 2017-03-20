@@ -16,10 +16,10 @@
 
 package org.axonframework.samples.bank.config;
 
+import com.mongodb.MongoClient;
 import org.axonframework.commandhandling.model.Repository;
 import org.axonframework.common.jpa.EntityManagerProvider;
-import org.axonframework.common.jpa.SimpleEntityManagerProvider;
-import org.axonframework.common.transaction.NoTransactionManager;
+import org.axonframework.common.transaction.TransactionManager;
 import org.axonframework.eventhandling.EventBus;
 import org.axonframework.eventsourcing.EventCountSnapshotTriggerDefinition;
 import org.axonframework.eventsourcing.EventSourcingRepository;
@@ -28,11 +28,12 @@ import org.axonframework.eventsourcing.Snapshotter;
 import org.axonframework.eventsourcing.eventstore.EventStorageEngine;
 import org.axonframework.eventsourcing.eventstore.EventStore;
 import org.axonframework.eventsourcing.eventstore.jpa.JpaEventStorageEngine;
+import org.axonframework.mongo.eventsourcing.eventstore.DefaultMongoTemplate;
+import org.axonframework.mongo.eventsourcing.eventstore.MongoEventStorageEngine;
 import org.axonframework.samples.bank.command.BankAccount;
 import org.axonframework.samples.bank.command.BankAccountCommandHandler;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.json.JacksonSerializer;
-import org.axonframework.serialization.upcasting.event.NoOpEventUpcaster;
 import org.axonframework.spring.config.AxonConfiguration;
 import org.axonframework.spring.eventsourcing.SpringAggregateSnapshotterFactoryBean;
 import org.slf4j.Logger;
@@ -42,10 +43,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.sql.DataSource;
-import java.sql.SQLException;
+import java.net.UnknownHostException;
 
 @SuppressWarnings("SpringJavaAutowiringInspection")
 @Configuration
@@ -58,8 +56,6 @@ public class AxonConfig {
     private AxonConfiguration axonConfiguration;
     @Autowired
     private EventBus eventBus;
-    @PersistenceContext
-    private EntityManager entityManager;
 
 //    @Bean
 //    public EventStorageEngine eventStorageEngine(DataSource dataSource) throws SQLException {
@@ -67,6 +63,29 @@ public class AxonConfig {
 //        EntityManagerProvider entityManagerProvider = new SimpleEntityManagerProvider(entityManager);
 //        return new JpaEventStorageEngine(serializer(), NoOpEventUpcaster.INSTANCE, dataSource, entityManagerProvider, NoTransactionManager.INSTANCE);
 //    }
+
+    @Bean
+    public MongoClient mongo() throws UnknownHostException {
+        return new MongoClient("127.0.0.1", 27017);
+    }
+
+    @Bean
+    public org.axonframework.mongo.eventsourcing.eventstore.MongoTemplate axonMongoTemplate() throws UnknownHostException {
+        return new DefaultMongoTemplate(mongo(), "axontrader", "domainevents", "snapshotevents");
+    }
+
+    @Bean
+    public org.axonframework.mongo.eventhandling.saga.repository.MongoTemplate mongoSagaTemplate()
+        throws UnknownHostException {
+        return new org.axonframework.mongo.eventhandling.saga.repository.DefaultMongoTemplate(mongo(),
+            "axontrader",
+            "sagas");
+    }
+
+    @Bean
+    public MongoEventStorageEngine eventStorageEngine() throws UnknownHostException {
+        return new MongoEventStorageEngine(axonMongoTemplate());
+    }
 
     @Bean
     public BankAccountCommandHandler bankAccountCommandHandler(EventStore eventStore, Snapshotter snapshotter) {
