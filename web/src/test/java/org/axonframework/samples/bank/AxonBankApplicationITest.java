@@ -7,6 +7,7 @@ import org.axonframework.commandhandling.model.Repository;
 import org.axonframework.common.transaction.Transaction;
 import org.axonframework.common.transaction.TransactionManager;
 import org.axonframework.messaging.unitofwork.DefaultUnitOfWork;
+import org.axonframework.samples.bank.api.bankaccount.AdjustSubAccountBalanceInCentsCommand;
 import org.axonframework.samples.bank.api.bankaccount.CreateBankAccountCommand;
 import org.axonframework.samples.bank.api.bankaccount.CreateSubBankAccountCommand;
 import org.axonframework.samples.bank.command.BankAccount;
@@ -59,7 +60,20 @@ public class AxonBankApplicationITest {
         }
 
         long stopTime = System.currentTimeMillis();
-        logger.info("The creation and the query of {} Events took {}ms", maxSubAccountToCreate, stopTime-startTime);
+        long creationTime = stopTime-startTime;
+
+        // No modify this big Aggregate 1000 Times
+        startTime = System.currentTimeMillis();
+
+        for (int i = 0; i < maxSubAccountToCreate; i++) {
+            commandBus.dispatch(GenericCommandMessage.asCommandMessage(
+                new AdjustSubAccountBalanceInCentsCommand(
+                    bankAccountId, i, random.nextInt(1000))));
+        }
+
+        stopTime = System.currentTimeMillis();
+        logger.info("The creation and the query of {} Events took {}ms", maxSubAccountToCreate, creationTime);
+        logger.info("Modifying {} Subaccounts took {}ms on average", maxSubAccountToCreate, (stopTime-startTime) / maxSubAccountToCreate);
     }
 
 }

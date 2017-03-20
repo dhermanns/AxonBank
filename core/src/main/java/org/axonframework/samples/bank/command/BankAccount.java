@@ -71,6 +71,10 @@ public class BankAccount {
         apply(new DestinationBankAccountCreditedEvent(id, amount, bankTransferId));
     }
 
+    public void modifySubAccountBalanceInCents(int subAccountNr, long newBalanceInCents) {
+        apply(new SubAccountBalanceInCentsAdjustedEvent(id, subAccountNr, newBalanceInCents));
+    }
+
     public void returnMoney(long amount) {
         apply(new MoneyOfFailedBankTransferReturnedEvent(id, amount));
     }
@@ -95,6 +99,11 @@ public class BankAccount {
     @EventHandler
     public void on(MoneySubtractedEvent event) {
         balanceInCents -= event.getAmount();
+    }
+
+    @EventHandler
+    public void on(SubAccountBalanceInCentsAdjustedEvent event) {
+        subAccounts.get(event.getSubAccountNr()).setBalanceInCents(event.getBalanceInCents());
     }
 
     public List<SubBankAccount> getSubAccounts() {

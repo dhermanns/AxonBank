@@ -91,4 +91,10 @@ public class BankAccountCommandHandler {
         Aggregate<BankAccount> bankAccountAggregate = repository.load(command.getBankAccountId());
         bankAccountAggregate.execute(bankAccount -> bankAccount.addSubBankAccount(command.getName(), command.getBalanceInCents()));
     }
+
+    @CommandHandler
+    public void handle(AdjustSubAccountBalanceInCentsCommand command) {
+        Aggregate<BankAccount> bankAccountAggregate = repository.load(command.getBankAccountId());
+        bankAccountAggregate.execute(bankAccount -> bankAccount.modifySubAccountBalanceInCents(command.getSubAccountNr(), command.getBalanceInCents()));
+    }
 }

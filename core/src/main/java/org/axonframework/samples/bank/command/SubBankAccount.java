@@ -20,6 +20,16 @@ public class SubBankAccount {
 
     private String bankAccountId;
     private String userName;
+
+    public long getBalanceInCents() {
+        return balanceInCents;
+    }
+
+    public SubBankAccount setBalanceInCents(long balanceInCents) {
+        this.balanceInCents = balanceInCents;
+        return this;
+    }
+
     private long balanceInCents;
 
     @SuppressWarnings("unused")
