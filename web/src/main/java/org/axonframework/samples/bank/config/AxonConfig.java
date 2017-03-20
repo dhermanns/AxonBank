@@ -83,7 +83,7 @@ public class AxonConfig {
         Repository<BankAccount> bankAccount =
             new EventSourcingRepository<>(
                 new GenericAggregateFactory<>(BankAccount.class), eventStore,
-                new EventCountSnapshotTriggerDefinition(snapshotter, 5));
+                new EventCountSnapshotTriggerDefinition(snapshotter, 50));
 
         return bankAccount;
     }

@@ -72,6 +72,11 @@ public class BankAccount {
     }
 
     public void modifySubAccountBalanceInCents(int subAccountNr, long newBalanceInCents) {
+        if (subAccountNr >= subAccounts.size()) {
+            throw new IllegalStateException(
+                String.format("The Subaccount %s to modify does not exist. The maximum number of subacounts of bankaccount %s is %s",
+                    subAccountNr, id, subAccounts.size()));
+        }
         apply(new SubAccountBalanceInCentsAdjustedEvent(id, subAccountNr, newBalanceInCents));
     }
 

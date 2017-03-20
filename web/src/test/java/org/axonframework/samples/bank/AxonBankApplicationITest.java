@@ -33,7 +33,8 @@ public class AxonBankApplicationITest {
 
     private Logger logger = LoggerFactory.getLogger(AxonBankApplicationITest.class);
 
-    private int maxSubAccountToCreate = 1000;
+    private int maxSubAccountToCreate = 1;
+    private int maxModifications = 1000;
 
     @Autowired
     private CommandBus commandBus;
@@ -65,15 +66,15 @@ public class AxonBankApplicationITest {
         // No modify this big Aggregate 1000 Times
         startTime = System.currentTimeMillis();
 
-        for (int i = 0; i < maxSubAccountToCreate; i++) {
+        for (int i = 0; i < maxModifications; i++) {
             commandBus.dispatch(GenericCommandMessage.asCommandMessage(
                 new AdjustSubAccountBalanceInCentsCommand(
-                    bankAccountId, i, random.nextInt(1000))));
+                    bankAccountId, random.nextInt(maxSubAccountToCreate), random.nextInt(1000))));
         }
 
         stopTime = System.currentTimeMillis();
         logger.info("The creation and the query of {} Events took {}ms", maxSubAccountToCreate, creationTime);
-        logger.info("Modifying {} Subaccounts took {}ms on average", maxSubAccountToCreate, (stopTime-startTime) / maxSubAccountToCreate);
+        logger.info("Modifying {} Subaccounts took {}ms on average", maxModifications, (stopTime-startTime) / maxModifications);
     }
 
 }
