@@ -17,8 +17,12 @@
 package org.axonframework.samples.bank.command;
 
 import org.axonframework.commandhandling.CommandHandler;
+import org.axonframework.commandhandling.conflictresolution.ConflictResolution;
+import org.axonframework.commandhandling.conflictresolution.ConflictResolver;
+import org.axonframework.commandhandling.conflictresolution.NoConflictResolver;
 import org.axonframework.commandhandling.model.Aggregate;
 import org.axonframework.commandhandling.model.AggregateNotFoundException;
+import org.axonframework.commandhandling.model.ConcurrencyException;
 import org.axonframework.commandhandling.model.Repository;
 import org.axonframework.eventhandling.EventBus;
 import org.axonframework.samples.bank.api.bankaccount.*;
@@ -94,6 +98,7 @@ public class BankAccountCommandHandler {
 
     @CommandHandler
     public void handle(AdjustSubAccountBalanceInCentsCommand command) {
+
         Aggregate<BankAccount> bankAccountAggregate = repository.load(command.getBankAccountId());
         bankAccountAggregate.execute(bankAccount -> bankAccount.modifySubAccountBalanceInCents(command.getSubAccountNr(), command.getBalanceInCents()));
     }
