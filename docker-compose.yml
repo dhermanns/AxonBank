@@ -19,6 +19,8 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=root
       - POSTGRES_DB=axonbank
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
   rabbitmq:
