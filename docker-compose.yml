@@ -14,11 +14,12 @@ services:
     ports:
       - "8081:8080"
   db:
-    image: mysql:5.7.15
+    image: postgres:9.6.2
     environment:
-      - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=axonbank
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=axonbank
     ports:
-      - "3306:3306"
+      - "5432:5432"
   rabbitmq:
     build: docker/rabbitmq/

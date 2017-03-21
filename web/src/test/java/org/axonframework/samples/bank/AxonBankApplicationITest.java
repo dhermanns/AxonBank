@@ -33,7 +33,7 @@ public class AxonBankApplicationITest {
 
     private Logger logger = LoggerFactory.getLogger(AxonBankApplicationITest.class);
 
-    private int maxSubAccountToCreate = 1;
+    private int maxSubAccountToCreate = 1000;
     private int maxModifications = 1000;
 
     @Autowired
