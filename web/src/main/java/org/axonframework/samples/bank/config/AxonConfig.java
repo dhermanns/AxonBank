@@ -16,6 +16,11 @@
 
 package org.axonframework.samples.bank.config;
 
+import org.axonframework.commandhandling.CommandBus;
+import org.axonframework.commandhandling.gateway.CommandGateway;
+import org.axonframework.commandhandling.gateway.DefaultCommandGateway;
+import org.axonframework.commandhandling.gateway.IntervalRetryScheduler;
+import org.axonframework.commandhandling.gateway.RetryScheduler;
 import org.axonframework.commandhandling.model.Repository;
 import org.axonframework.eventhandling.EventBus;
 import org.axonframework.eventsourcing.EventCountSnapshotTriggerDefinition;
@@ -35,9 +40,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.scheduling.concurrent.ScheduledExecutorFactoryBean;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 @SuppressWarnings("SpringJavaAutowiringInspection")
 @Configuration
@@ -50,15 +56,14 @@ public class AxonConfig {
     private AxonConfiguration axonConfiguration;
     @Autowired
     private EventBus eventBus;
-    @PersistenceContext
-    private EntityManager entityManager;
 
-//    @Bean
-//    public EventStorageEngine eventStorageEngine(DataSource dataSource) throws SQLException {
-//
-//        EntityManagerProvider entityManagerProvider = new SimpleEntityManagerProvider(entityManager);
-//        return new JpaEventStorageEngine(serializer(), NoOpEventUpcaster.INSTANCE, dataSource, entityManagerProvider, NoTransactionManager.INSTANCE);
-//    }
+    @Bean
+    public CommandGateway commandGateway(CommandBus commandBus) {
+
+        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
+        RetryScheduler retryScheduler = new OwnRetryScheduler(scheduledExecutorService, 1, 10);
+        return new DefaultCommandGateway(commandBus, retryScheduler);
+    }
 
     @Bean
     public BankAccountCommandHandler bankAccountCommandHandler(EventStore eventStore, Snapshotter snapshotter) {

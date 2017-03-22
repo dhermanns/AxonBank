@@ -2,11 +2,8 @@ package org.axonframework.samples.bank;
 
 import org.axonframework.commandhandling.CommandBus;
 import org.axonframework.commandhandling.GenericCommandMessage;
-import org.axonframework.commandhandling.model.Aggregate;
 import org.axonframework.commandhandling.model.Repository;
-import org.axonframework.common.transaction.Transaction;
 import org.axonframework.common.transaction.TransactionManager;
-import org.axonframework.messaging.unitofwork.DefaultUnitOfWork;
 import org.axonframework.samples.bank.api.bankaccount.AdjustSubAccountBalanceInCentsCommand;
 import org.axonframework.samples.bank.api.bankaccount.CreateBankAccountCommand;
 import org.axonframework.samples.bank.api.bankaccount.CreateSubBankAccountCommand;
@@ -29,23 +26,18 @@ import java.util.Random;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ComponentScan(basePackages = "org.axonframework.samples.bank")
-public class AxonBankApplicationITest {
+public class AxonBankApplicationCreationITest {
 
-    private Logger logger = LoggerFactory.getLogger(AxonBankApplicationITest.class);
+    private Logger logger = LoggerFactory.getLogger(AxonBankApplicationCreationITest.class);
 
-    private int maxSubAccountToCreate = 1000;
-    private int maxModifications = 1000;
+    public static final int MAX_SUB_ACCOUNT_TO_CREATE = 100;
 
     @Autowired
     private CommandBus commandBus;
-    @Autowired
-    private Repository<BankAccount> repository;
-    @Autowired
-    private TransactionManager transactionManager;
 
     @Test
     public void testCreateBigBankAccount() {
-        String bankAccountId = UUID.randomUUID().toString();
+        String bankAccountId = "MyBankAccountId";
 
         long startTime = System.currentTimeMillis();
 
@@ -54,27 +46,14 @@ public class AxonBankApplicationITest {
             new CreateBankAccountCommand(bankAccountId, 0)));
 
         Random random = new Random();
-        for (int i = 0; i < maxSubAccountToCreate; i++) {
+        for (int i = 0; i < MAX_SUB_ACCOUNT_TO_CREATE; i++) {
             commandBus.dispatch(GenericCommandMessage.asCommandMessage(
                 new CreateSubBankAccountCommand(
                     bankAccountId, UUID.randomUUID().toString(), random.nextInt(1000))));
         }
 
         long stopTime = System.currentTimeMillis();
-        long creationTime = stopTime-startTime;
-
-        // No modify this big Aggregate 1000 Times
-        startTime = System.currentTimeMillis();
-
-        for (int i = 0; i < maxModifications; i++) {
-            commandBus.dispatch(GenericCommandMessage.asCommandMessage(
-                new AdjustSubAccountBalanceInCentsCommand(
-                    bankAccountId, random.nextInt(maxSubAccountToCreate), random.nextInt(1000))));
-        }
-
-        stopTime = System.currentTimeMillis();
-        logger.info("The creation and the query of {} Events took {}ms", maxSubAccountToCreate, creationTime);
-        logger.info("Modifying {} Subaccounts took {}ms on average", maxModifications, (stopTime-startTime) / maxModifications);
+        logger.info("The creation and the query of {} Events took {}ms", MAX_SUB_ACCOUNT_TO_CREATE, stopTime - startTime);
     }
 
 }
