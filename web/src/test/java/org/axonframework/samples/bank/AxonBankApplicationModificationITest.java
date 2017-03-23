@@ -34,10 +34,6 @@ public class AxonBankApplicationModificationITest {
 
     @Autowired
     private CommandBus commandBus;
-    @Autowired
-    private Repository<BankAccount> repository;
-    @Autowired
-    private TransactionManager transactionManager;
 
     @Test
     public void testMassiveModifySubAccount() {
