@@ -16,6 +16,9 @@
 
 package org.axonframework.samples.bank.config;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.MongoClient;
 import org.axonframework.commandhandling.model.Repository;
 import org.axonframework.eventhandling.EventBus;
@@ -26,10 +29,13 @@ import org.axonframework.eventsourcing.Snapshotter;
 import org.axonframework.eventsourcing.eventstore.EventStore;
 import org.axonframework.mongo.eventsourcing.eventstore.DefaultMongoTemplate;
 import org.axonframework.mongo.eventsourcing.eventstore.MongoEventStorageEngine;
+import org.axonframework.mongo.eventsourcing.eventstore.documentpercommit.DocumentPerCommitStorageStrategy;
+import org.axonframework.mongo.eventsourcing.eventstore.documentperevent.DocumentPerEventStorageStrategy;
 import org.axonframework.samples.bank.command.BankAccount;
 import org.axonframework.samples.bank.command.BankAccountCommandHandler;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.json.JacksonSerializer;
+import org.axonframework.serialization.upcasting.event.NoOpEventUpcaster;
 import org.axonframework.spring.config.AxonConfiguration;
 import org.axonframework.spring.eventsourcing.SpringAggregateSnapshotterFactoryBean;
 import org.slf4j.Logger;
@@ -80,7 +86,11 @@ public class AxonConfig {
 
     @Bean
     public MongoEventStorageEngine eventStorageEngine() throws UnknownHostException {
-        return new MongoEventStorageEngine(axonMongoTemplate());
+
+        return new MongoEventStorageEngine(serializer(),
+            NoOpEventUpcaster.INSTANCE,
+            axonMongoTemplate(),
+            new DocumentPerEventStorageStrategy());
     }
 
     @Bean
@@ -110,6 +120,9 @@ public class AxonConfig {
 
     @Bean
     public Serializer serializer() {
-        return new JacksonSerializer();
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+        return new JacksonSerializer(objectMapper);
     }
 }
