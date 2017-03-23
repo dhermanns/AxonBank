@@ -29,6 +29,7 @@ import org.axonframework.eventsourcing.Snapshotter;
 import org.axonframework.eventsourcing.eventstore.EventStore;
 import org.axonframework.mongo.eventsourcing.eventstore.DefaultMongoTemplate;
 import org.axonframework.mongo.eventsourcing.eventstore.MongoEventStorageEngine;
+import org.axonframework.mongo.eventsourcing.eventstore.MongoTemplate;
 import org.axonframework.mongo.eventsourcing.eventstore.documentpercommit.DocumentPerCommitStorageStrategy;
 import org.axonframework.mongo.eventsourcing.eventstore.documentperevent.DocumentPerEventStorageStrategy;
 import org.axonframework.samples.bank.command.BankAccount;
@@ -85,11 +86,11 @@ public class AxonConfig {
     }
 
     @Bean
-    public MongoEventStorageEngine eventStorageEngine() throws UnknownHostException {
+    public MongoEventStorageEngine eventStorageEngine(Serializer serializer, MongoTemplate axonMongoTemplate) throws UnknownHostException {
 
-        return new MongoEventStorageEngine(serializer(),
+        return new MongoEventStorageEngine(serializer,
             NoOpEventUpcaster.INSTANCE,
-            axonMongoTemplate(),
+            axonMongoTemplate,
             new DocumentPerEventStorageStrategy());
     }
 
