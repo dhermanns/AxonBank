@@ -16,6 +16,10 @@
 
 package org.axonframework.samples.bank.config;
 
+import org.axonframework.commandhandling.CommandBus;
+import org.axonframework.commandhandling.gateway.CommandGateway;
+import org.axonframework.commandhandling.gateway.DefaultCommandGateway;
+import org.axonframework.commandhandling.gateway.RetryScheduler;
 import org.axonframework.commandhandling.model.Repository;
 import org.axonframework.eventhandling.EventBus;
 import org.axonframework.eventsourcing.EventCountSnapshotTriggerDefinition;
@@ -36,8 +40,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 @SuppressWarnings("SpringJavaAutowiringInspection")
 @Configuration

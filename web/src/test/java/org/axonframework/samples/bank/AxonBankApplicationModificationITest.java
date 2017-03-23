@@ -2,6 +2,7 @@ package org.axonframework.samples.bank;
 
 import org.axonframework.commandhandling.CommandBus;
 import org.axonframework.commandhandling.GenericCommandMessage;
+import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.commandhandling.model.Repository;
 import org.axonframework.common.transaction.TransactionManager;
 import org.axonframework.samples.bank.api.bankaccount.AdjustSubAccountBalanceInCentsCommand;
@@ -30,8 +31,10 @@ public class AxonBankApplicationModificationITest {
 
     private Logger logger = LoggerFactory.getLogger(AxonBankApplicationModificationITest.class);
 
-    private int maxModifications = 100000;
+    private int maxModifications = 100;
 
+    @Autowired
+    private CommandGateway commandGateway;
     @Autowired
     private CommandBus commandBus;
     @Autowired
@@ -49,7 +52,7 @@ public class AxonBankApplicationModificationITest {
         startTime = System.currentTimeMillis();
         Random random = new Random();
         for (int i = 0; i < maxModifications; i++) {
-            commandBus.dispatch(GenericCommandMessage.asCommandMessage(
+            commandGateway.send(GenericCommandMessage.asCommandMessage(
                 new AdjustSubAccountBalanceInCentsCommand(
                     bankAccountId, random.nextInt(AxonBankApplicationCreationITest.MAX_SUB_ACCOUNT_TO_CREATE), random.nextInt(1000))));
         }
