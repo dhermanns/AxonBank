@@ -41,8 +41,9 @@
             <version>2.3.4</version>
         </dependency>
         <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
+            <groupId>com.ibm.db2</groupId>
+            <artifactId>db2jcc</artifactId>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

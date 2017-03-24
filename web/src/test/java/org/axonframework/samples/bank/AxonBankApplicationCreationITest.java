@@ -30,7 +30,7 @@ public class AxonBankApplicationCreationITest {
 
     private Logger logger = LoggerFactory.getLogger(AxonBankApplicationCreationITest.class);
 
-    public static final int MAX_SUB_ACCOUNT_TO_CREATE = 100;
+    public static final int MAX_SUB_ACCOUNT_TO_CREATE = 1_000;
 
     @Autowired
     private CommandBus commandBus;

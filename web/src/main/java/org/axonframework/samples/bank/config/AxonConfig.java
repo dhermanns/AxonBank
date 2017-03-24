@@ -35,6 +35,7 @@ import org.axonframework.eventsourcing.Snapshotter;
 import org.axonframework.eventsourcing.eventstore.EventStorageEngine;
 import org.axonframework.eventsourcing.eventstore.EventStore;
 import org.axonframework.eventsourcing.eventstore.jpa.JpaEventStorageEngine;
+import org.axonframework.eventsourcing.eventstore.jpa.SQLErrorCodesResolver;
 import org.axonframework.samples.bank.command.BankAccount;
 import org.axonframework.samples.bank.command.BankAccountCommandHandler;
 import org.axonframework.serialization.Serializer;
@@ -74,7 +75,11 @@ public class AxonConfig {
     public EventStorageEngine eventStorageEngine(DataSource dataSource) throws SQLException {
 
         EntityManagerProvider entityManagerProvider = new SimpleEntityManagerProvider(entityManager);
-        return new JpaEventStorageEngine(serializer(), NoOpEventUpcaster.INSTANCE, dataSource, entityManagerProvider, NoTransactionManager.INSTANCE);
+
+        return new JpaEventStorageEngine(
+            serializer(), NoOpEventUpcaster.INSTANCE, sqlErrorCodesResolver(),
+            null, entityManagerProvider, NoTransactionManager.INSTANCE,
+            null, null, true);
     }
 
     @Bean
@@ -91,6 +96,12 @@ public class AxonConfig {
         Repository<BankAccount> bankAccountRepository = bankAccountRepository2(eventStore, snapshotter);
 
         return new BankAccountCommandHandler(bankAccountRepository, eventBus);
+    }
+
+    // An own resolver is needed because Axon doesn't recognize DB2 on linux correctly
+    @Bean
+    public SQLErrorCodesResolver sqlErrorCodesResolver() {
+        return new SQLErrorCodesResolver("DB2");
     }
 
     @Bean

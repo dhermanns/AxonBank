@@ -14,14 +14,11 @@ services:
     ports:
       - "8081:8080"
   db:
-    image: postgres:9.6.2
+    image: docker-images-lvm.lvm.de/lvm-db2:v11.1-1
+    network_mode: "bridge"
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=root
-      - POSTGRES_DB=axonbank
-    volumes:
-      - ./pgdata:/var/lib/postgresql/data
+    - DB2INST1_PASSWORD=dvasolaris
     ports:
-      - "5432:5432"
+    - "50000:50000"
   rabbitmq:
     build: docker/rabbitmq/

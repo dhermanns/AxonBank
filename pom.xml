@@ -37,6 +37,9 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
         <axon.version>3.0.2</axon.version>
+
+        <db2.driver.version>4.19.26</db2.driver.version>
+        <spring-boot-starter-bom.version>1.0.1</spring-boot-starter-bom.version>
     </properties>
 
     <modules>
@@ -45,6 +48,24 @@
         <module>query</module>
         <module>web</module>
     </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.ibm.db2</groupId>
+                <artifactId>db2jcc</artifactId>
+                <scope>compile</scope>
+                <version>${db2.driver.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.lvm.spring.boot.starter</groupId>
+                <artifactId>spring-boot-starter-bom</artifactId>
+                <version>${spring-boot-starter-bom.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
