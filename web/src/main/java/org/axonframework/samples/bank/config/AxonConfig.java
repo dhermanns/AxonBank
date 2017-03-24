@@ -43,12 +43,14 @@ import org.axonframework.serialization.json.JacksonSerializer;
 import org.axonframework.serialization.upcasting.event.NoOpEventUpcaster;
 import org.axonframework.spring.config.AxonConfiguration;
 import org.axonframework.spring.eventsourcing.SpringAggregateSnapshotterFactoryBean;
+import org.axonframework.spring.messaging.unitofwork.SpringTransactionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -72,13 +74,27 @@ public class AxonConfig {
     private EntityManager entityManager;
 
     @Bean
-    public EventStorageEngine eventStorageEngine(DataSource dataSource) throws SQLException {
+    public Serializer serializer() {
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+        return new JacksonSerializer(objectMapper);
+    }
+
+    // An own resolver is needed because Axon doesn't recognize DB2 on linux correctly
+    @Bean
+    public SQLErrorCodesResolver sqlErrorCodesResolver() {
+        return new SQLErrorCodesResolver("DB2");
+    }
+
+    @Bean
+    public EventStorageEngine eventStorageEngine(PlatformTransactionManager platformTransactionManager, DataSource dataSource) throws SQLException {
 
         EntityManagerProvider entityManagerProvider = new SimpleEntityManagerProvider(entityManager);
 
         return new JpaEventStorageEngine(
             serializer(), NoOpEventUpcaster.INSTANCE, sqlErrorCodesResolver(),
-            null, entityManagerProvider, NoTransactionManager.INSTANCE,
+            null, entityManagerProvider, new SpringTransactionManager(platformTransactionManager),
             null, null, true);
     }
 
@@ -98,12 +114,6 @@ public class AxonConfig {
         return new BankAccountCommandHandler(bankAccountRepository, eventBus);
     }
 
-    // An own resolver is needed because Axon doesn't recognize DB2 on linux correctly
-    @Bean
-    public SQLErrorCodesResolver sqlErrorCodesResolver() {
-        return new SQLErrorCodesResolver("DB2");
-    }
-
     @Bean
     public Repository<BankAccount> bankAccountRepository2(EventStore eventStore, Snapshotter snapshotter) {
 
@@ -120,13 +130,5 @@ public class AxonConfig {
     @Bean
     public SpringAggregateSnapshotterFactoryBean snapshotter() {
         return new SpringAggregateSnapshotterFactoryBean();
-    }
-
-    @Bean
-    public Serializer serializer() {
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-        return new JacksonSerializer(objectMapper);
     }
 }
