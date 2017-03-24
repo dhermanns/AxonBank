@@ -1,15 +1,8 @@
 package org.axonframework.samples.bank;
 
-import org.axonframework.commandhandling.CommandBus;
 import org.axonframework.commandhandling.GenericCommandMessage;
 import org.axonframework.commandhandling.gateway.CommandGateway;
-import org.axonframework.commandhandling.model.Repository;
-import org.axonframework.common.transaction.TransactionManager;
 import org.axonframework.samples.bank.api.bankaccount.AdjustSubAccountBalanceInCentsCommand;
-import org.axonframework.samples.bank.api.bankaccount.CreateBankAccountCommand;
-import org.axonframework.samples.bank.api.bankaccount.CreateSubBankAccountCommand;
-import org.axonframework.samples.bank.command.BankAccount;
-import org.jgroups.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -35,12 +28,6 @@ public class AxonBankApplicationModificationITest {
 
     @Autowired
     private CommandGateway commandGateway;
-    @Autowired
-    private CommandBus commandBus;
-    @Autowired
-    private Repository<BankAccount> repository;
-    @Autowired
-    private TransactionManager transactionManager;
 
     @Test
     public void testMassiveModifySubAccount() {
