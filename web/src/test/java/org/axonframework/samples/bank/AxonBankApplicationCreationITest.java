@@ -37,7 +37,7 @@ public class AxonBankApplicationCreationITest {
 
     @Test
     public void testCreateBigBankAccount() {
-        String bankAccountId = "MyBankAccountId";
+        String bankAccountId = "MyBankAccountId2";
 
         long startTime = System.currentTimeMillis();
 

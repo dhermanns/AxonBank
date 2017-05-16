@@ -80,6 +80,24 @@ public class BankAccount {
         apply(new SubAccountBalanceInCentsAdjustedEvent(id, subAccountNr, newBalanceInCents));
     }
 
+    public void batchModifySubAccountBalanceInCents(List<Integer> subAccountNrList, List<Long> newBalanceInCentsList) {
+
+        for (int i = 0; i < subAccountNrList.size(); i++) {
+            if (subAccountNrList.get(i) >= subAccounts.size()) {
+                throw new IllegalStateException(
+                    String.format("The Subaccount %s to modify does not exist. The maximum number of subacounts of bankaccount %s is %s",
+                        subAccountNrList.get(i), id, subAccounts.size()));
+            }
+            // simulate time to compute the outcome event
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            apply(new SubAccountBalanceInCentsAdjustedEvent(id, subAccountNrList.get(i), newBalanceInCentsList.get(i)));
+        }
+    }
+
     public void returnMoney(long amount) {
         apply(new MoneyOfFailedBankTransferReturnedEvent(id, amount));
     }

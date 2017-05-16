@@ -26,7 +26,6 @@ import org.axonframework.commandhandling.gateway.RetryScheduler;
 import org.axonframework.commandhandling.model.Repository;
 import org.axonframework.common.jpa.EntityManagerProvider;
 import org.axonframework.common.jpa.SimpleEntityManagerProvider;
-import org.axonframework.common.transaction.NoTransactionManager;
 import org.axonframework.eventhandling.EventBus;
 import org.axonframework.eventsourcing.EventCountSnapshotTriggerDefinition;
 import org.axonframework.eventsourcing.EventSourcingRepository;
@@ -34,8 +33,9 @@ import org.axonframework.eventsourcing.GenericAggregateFactory;
 import org.axonframework.eventsourcing.Snapshotter;
 import org.axonframework.eventsourcing.eventstore.EventStorageEngine;
 import org.axonframework.eventsourcing.eventstore.EventStore;
-import org.axonframework.eventsourcing.eventstore.jpa.JpaEventStorageEngine;
+import org.axonframework.eventsourcing.eventstore.jdbc.EventSchema;
 import org.axonframework.eventsourcing.eventstore.jpa.SQLErrorCodesResolver;
+import org.axonframework.samples.bank.util.NonStrictJdbcEventStorageEngine;
 import org.axonframework.samples.bank.command.BankAccount;
 import org.axonframework.samples.bank.command.BankAccountCommandHandler;
 import org.axonframework.serialization.Serializer;
@@ -92,10 +92,15 @@ public class AxonConfig {
 
         EntityManagerProvider entityManagerProvider = new SimpleEntityManagerProvider(entityManager);
 
-        return new JpaEventStorageEngine(
-            serializer(), NoOpEventUpcaster.INSTANCE, sqlErrorCodesResolver(),
-            null, entityManagerProvider, new SpringTransactionManager(platformTransactionManager),
-            null, null, true);
+//        return new JpaEventStorageEngine(
+//                serializer(), NoOpEventUpcaster.INSTANCE, sqlErrorCodesResolver(),
+//                null, entityManagerProvider, new SpringTransactionManager(platformTransactionManager),
+//                null, null, true);
+
+        return new NonStrictJdbcEventStorageEngine(
+            serializer(), NoOpEventUpcaster.INSTANCE, sqlErrorCodesResolver(), 50,
+            dataSource::getConnection, new SpringTransactionManager(platformTransactionManager), byte[].class, eventSchema(),
+            null, null);
     }
 
     @Bean
@@ -130,5 +135,22 @@ public class AxonConfig {
     @Bean
     public SpringAggregateSnapshotterFactoryBean snapshotter() {
         return new SpringAggregateSnapshotterFactoryBean();
+    }
+
+    private EventSchema eventSchema() {
+        return EventSchema.builder()
+            .withEventTable("DOMAIN_EVENT_ENTRY")
+            .withAggregateIdentifierColumn("AGGREGATE_IDENTIFIER")
+            .withEventIdentifierColumn("EVENT_IDENTIFIER")
+            .withMetaDataColumn("META_DATA")
+            .withGlobalIndexColumn("GLOBAL_INDEX")
+            .withPayloadColumn("PAYLOAD")
+            .withPayloadRevisionColumn("PAYLOAD_REVISION")
+            .withPayloadTypeColumn("PAYLOAD_TYPE")
+            .withSequenceNumberColumn("SEQUENCE_NUMBER")
+            .withSnapshotTable("SNAPSHOT_EVENT_ENTRY")
+            .withTimestampColumn("TIME_STAMP")
+            .withTypeColumn("TYPE")
+            .build();
     }
 }
