@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.sql.DataSource;
 import java.util.Random;
 
 /**
@@ -24,14 +25,19 @@ public class AxonBankApplicationModificationITest {
 
     private Logger logger = LoggerFactory.getLogger(AxonBankApplicationModificationITest.class);
 
-    private int maxModifications = 1;
+    private int maxModifications = 100;
 
     @Autowired
     private CommandGateway commandGateway;
 
+    @Autowired
+    DataSource dataSource;
+
     @Test
     public void testMassiveModifySubAccount() {
-        String bankAccountId = "MyBankAccountId";
+        logger.info("Datasource ist {}", dataSource);
+
+        String bankAccountId = "MyBankAccountId2";
 
         long startTime = System.currentTimeMillis();
 
