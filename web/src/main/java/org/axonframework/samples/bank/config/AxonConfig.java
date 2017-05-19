@@ -34,6 +34,8 @@ import org.axonframework.eventsourcing.Snapshotter;
 import org.axonframework.eventsourcing.eventstore.EventStorageEngine;
 import org.axonframework.eventsourcing.eventstore.EventStore;
 import org.axonframework.eventsourcing.eventstore.jdbc.EventSchema;
+import org.axonframework.eventsourcing.eventstore.jdbc.JdbcEventStorageEngine;
+import org.axonframework.eventsourcing.eventstore.jpa.JpaEventStorageEngine;
 import org.axonframework.eventsourcing.eventstore.jpa.SQLErrorCodesResolver;
 import org.axonframework.samples.bank.util.NonStrictJdbcEventStorageEngine;
 import org.axonframework.samples.bank.command.BankAccount;
@@ -74,11 +76,15 @@ public class AxonConfig {
     private EntityManager entityManager;
 
     @Bean
-    public Serializer serializer() {
+    public Serializer jacksonSerializer() {
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-        return new JacksonSerializer(objectMapper);
+        ObjectMapper mapper  = new ObjectMapper();
+        mapper.setVisibility(mapper.getSerializationConfig().getDefaultVisibilityChecker()
+            .withFieldVisibility(JsonAutoDetect.Visibility.ANY)
+            .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
+            .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
+            .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
+        return new JacksonSerializer(mapper);
     }
 
     // An own resolver is needed because Axon doesn't recognize DB2 on linux correctly
@@ -92,13 +98,13 @@ public class AxonConfig {
 
         EntityManagerProvider entityManagerProvider = new SimpleEntityManagerProvider(entityManager);
 
-//        return new JpaEventStorageEngine(
-//                serializer(), NoOpEventUpcaster.INSTANCE, sqlErrorCodesResolver(),
-//                null, entityManagerProvider, new SpringTransactionManager(platformTransactionManager),
-//                null, null, true);
+/*        return new JpaEventStorageEngine(
+                serializer(), NoOpEventUpcaster.INSTANCE, sqlErrorCodesResolver(),
+                null, entityManagerProvider, new SpringTransactionManager(platformTransactionManager),
+                null, null, true);*/
 
-        return new NonStrictJdbcEventStorageEngine(
-            serializer(), NoOpEventUpcaster.INSTANCE, sqlErrorCodesResolver(), 50,
+        return new JdbcEventStorageEngine(
+            jacksonSerializer(), NoOpEventUpcaster.INSTANCE, sqlErrorCodesResolver(), 50,
             dataSource::getConnection, new SpringTransactionManager(platformTransactionManager), byte[].class, eventSchema(),
             null, null);
     }
