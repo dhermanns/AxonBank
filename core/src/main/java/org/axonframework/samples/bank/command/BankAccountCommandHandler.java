@@ -94,7 +94,10 @@ public class BankAccountCommandHandler {
 
     @CommandHandler
     public void handle(AdjustSubAccountBalanceInCentsCommand command) {
+        long start = System.currentTimeMillis();
         Aggregate<BankAccount> bankAccountAggregate = repository.load(command.getBankAccountId());
+        long stop = System.currentTimeMillis();
+        System.out.println("Loading took " + (stop-start) + "ms...");
         bankAccountAggregate.execute(bankAccount -> bankAccount.modifySubAccountBalanceInCents(command.getSubAccountNr(), command.getBalanceInCents()));
     }
 
