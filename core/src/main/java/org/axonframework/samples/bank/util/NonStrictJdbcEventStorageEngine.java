@@ -155,68 +155,32 @@ public class NonStrictJdbcEventStorageEngine extends BatchingEventStorageEngine 
             return;
         }
         final String table = schema.domainEventTable();
-        final String updateOrInsertSequenceTableSql =
-            "MERGE INTO SEQUENCE_TABLE USING " +
-                "( " +
-                "  SELECT * FROM TABLE ( " +
-                "    VALUES (?) " +
-                "  ) " +
-                ") as NewEntry(" + schema.aggregateIdentifierColumn() + ") " +
-                "ON SEQUENCE_TABLE." + schema.aggregateIdentifierColumn() + " = NewEntry." + schema.aggregateIdentifierColumn() + " " +
-                "WHEN MATCHED THEN " +
-                "    UPDATE SET " + schema.sequenceNumberColumn() + " = " + schema.sequenceNumberColumn() + " + 1 " +
-                "WHEN NOT MATCHED THEN " +
-                "    INSERT (" + schema.aggregateIdentifierColumn() + ", " + schema.sequenceNumberColumn() + ") " +
-                "    VALUES (NewEntry." + schema.aggregateIdentifierColumn() + ", 0)";
-        final String insertEventSql = "INSERT INTO " + table + " (" +
+        final String sql = "INSERT INTO " + table + " (" +
             String.join(", ", schema.eventIdentifierColumn(), schema.aggregateIdentifierColumn(),
-                schema.sequenceNumberColumn(), schema.typeColumn(), schema.timestampColumn(),
+                schema.typeColumn(), schema.timestampColumn(),
                 schema.payloadTypeColumn(), schema.payloadRevisionColumn(), schema.payloadColumn(),
-                schema.metaDataColumn()) + ") " +
-            "VALUES (?,?,(SELECT SEQUENCE_NUMBER FROM SEQUENCE_TABLE WHERE AGGREGATE_IDENTIFIER = ?),?,?,?,?,?,?)";
+                schema.metaDataColumn()) + ") VALUES (?,?,?,?,?,?,?,?)";
+        transactionManager.executeInTransaction(
+            () ->
+                executeBatch(getConnection(), connection -> {
+                    PreparedStatement preparedStatement = connection.prepareStatement(sql);
 
-        Transaction tx = transactionManager.startTransaction();
-        Connection connection = getConnection();
-        PreparedStatement insertEventPS = null;
-        PreparedStatement updateOrInsertSequenceTablePS = null;
-
-        try {
-            insertEventPS = connection.prepareStatement(insertEventSql);
-            updateOrInsertSequenceTablePS = connection.prepareStatement(updateOrInsertSequenceTableSql);
-
-            for (EventMessage<?> eventMessage : events) {
-
-                DomainEventMessage<?> event = asDomainEventMessage(eventMessage);
-                SerializedObject<?> payload = serializePayload(event, serializer, dataType);
-                SerializedObject<?> metaData = serializeMetaData(event, serializer, dataType);
-
-                updateOrInsertSequenceTablePS.setString(1, event.getAggregateIdentifier());
-                updateOrInsertSequenceTablePS.execute();
-
-                insertEventPS.setString(1, event.getIdentifier());
-                insertEventPS.setString(2, event.getAggregateIdentifier());
-                insertEventPS.setString(3, event.getAggregateIdentifier());
-                insertEventPS.setString(4, event.getType());
-                writeTimestamp(insertEventPS, 5, event.getTimestamp());
-                insertEventPS.setString(6, payload.getType().getName());
-                insertEventPS.setString(7, payload.getType().getRevision());
-                insertEventPS.setObject(8, payload.getData());
-                insertEventPS.setObject(9, metaData.getData());
-                insertEventPS.execute();
-            }
-        } catch(Exception ex) {
-            tx.rollback();
-            throw new EventStoreException(String.format("Unable to store the events:\n %s", events), ex);
-        } finally {
-            tx.commit();
-            if (insertEventPS != null) {
-                closeQuietly(insertEventPS);
-            }
-            if (updateOrInsertSequenceTablePS != null) {
-                closeQuietly(updateOrInsertSequenceTablePS);
-            }
-            closeQuietly(connection);
-        }
+                    for (EventMessage<?> eventMessage : events) {
+                        DomainEventMessage<?> event = asDomainEventMessage(eventMessage);
+                        SerializedObject<?> payload = serializePayload(event, serializer, dataType);
+                        SerializedObject<?> metaData = serializeMetaData(event, serializer, dataType);
+                        preparedStatement.setString(1, event.getIdentifier());
+                        preparedStatement.setString(2, event.getAggregateIdentifier());
+                        preparedStatement.setString(3, event.getType());
+                        writeTimestamp(preparedStatement, 4, event.getTimestamp());
+                        preparedStatement.setString(5, payload.getType().getName());
+                        preparedStatement.setString(6, payload.getType().getRevision());
+                        preparedStatement.setObject(7, payload.getData());
+                        preparedStatement.setObject(8, metaData.getData());
+                        preparedStatement.addBatch();
+                    }
+                    return preparedStatement;
+                }, e -> handlePersistenceException(e, events.get(0))));
     }
 
     @Override
