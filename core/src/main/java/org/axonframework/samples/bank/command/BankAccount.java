@@ -77,6 +77,12 @@ public class BankAccount {
                 String.format("The Subaccount %s to modify does not exist. The maximum number of subacounts of bankaccount %s is %s",
                     subAccountNr, id, subAccounts.size()));
         }
+        // simulate time to compute the outcome event
+        try {
+            Thread.sleep(0);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         apply(new SubAccountBalanceInCentsAdjustedEvent(id, subAccountNr, newBalanceInCents));
     }
 
@@ -90,7 +96,7 @@ public class BankAccount {
             }
             // simulate time to compute the outcome event
             try {
-                Thread.sleep(10);
+                Thread.sleep(0);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

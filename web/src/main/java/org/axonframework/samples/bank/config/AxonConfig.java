@@ -19,18 +19,18 @@ package org.axonframework.samples.bank.config;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.sf.ehcache.CacheManager;
 import org.axonframework.commandhandling.CommandBus;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.commandhandling.gateway.DefaultCommandGateway;
 import org.axonframework.commandhandling.gateway.RetryScheduler;
 import org.axonframework.commandhandling.model.Repository;
+import org.axonframework.common.caching.Cache;
+import org.axonframework.common.caching.EhCacheAdapter;
 import org.axonframework.common.jpa.EntityManagerProvider;
 import org.axonframework.common.jpa.SimpleEntityManagerProvider;
 import org.axonframework.eventhandling.EventBus;
-import org.axonframework.eventsourcing.EventCountSnapshotTriggerDefinition;
-import org.axonframework.eventsourcing.EventSourcingRepository;
-import org.axonframework.eventsourcing.GenericAggregateFactory;
-import org.axonframework.eventsourcing.Snapshotter;
+import org.axonframework.eventsourcing.*;
 import org.axonframework.eventsourcing.eventstore.EventStorageEngine;
 import org.axonframework.eventsourcing.eventstore.EventStore;
 import org.axonframework.eventsourcing.eventstore.jdbc.EventSchema;
@@ -49,6 +49,7 @@ import org.axonframework.spring.messaging.unitofwork.SpringTransactionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.ehcache.EhCacheManagerFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
@@ -74,6 +75,8 @@ public class AxonConfig {
     private EventBus eventBus;
     @PersistenceContext
     private EntityManager entityManager;
+    @Autowired
+    private Cache cache;
 
     @Bean
     public Serializer jacksonSerializer() {
@@ -98,12 +101,12 @@ public class AxonConfig {
 
         EntityManagerProvider entityManagerProvider = new SimpleEntityManagerProvider(entityManager);
 
-/*        return new JpaEventStorageEngine(
-                serializer(), NoOpEventUpcaster.INSTANCE, sqlErrorCodesResolver(),
-                null, entityManagerProvider, new SpringTransactionManager(platformTransactionManager),
-                null, null, true);*/
+//        return new JpaEventStorageEngine(
+//                jacksonSerializer(), NoOpEventUpcaster.INSTANCE, sqlErrorCodesResolver(),
+//                null, entityManagerProvider, new SpringTransactionManager(platformTransactionManager),
+//                null, null, true);
 
-        return new JdbcEventStorageEngine(
+        return new NonStrictJdbcEventStorageEngine(
             jacksonSerializer(), NoOpEventUpcaster.INSTANCE, sqlErrorCodesResolver(), 50,
             dataSource::getConnection, new SpringTransactionManager(platformTransactionManager), byte[].class, eventSchema(),
             null, null);
@@ -112,9 +115,11 @@ public class AxonConfig {
     @Bean
     public CommandGateway commandGateway(CommandBus commandBus) {
 
-        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
-        RetryScheduler retryScheduler = new OwnRetryScheduler(scheduledExecutorService, 1, 10);
-        return new DefaultCommandGateway(commandBus, retryScheduler);
+//        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
+//        RetryScheduler retryScheduler = new OwnRetryScheduler(scheduledExecutorService, 1, 10);
+//        return new DefaultCommandGateway(commandBus, retryScheduler);
+
+        return new DefaultCommandGateway(commandBus);
     }
 
     @Bean
@@ -130,12 +135,30 @@ public class AxonConfig {
 
         axonConfiguration.repository(BankAccount.class);
         Repository<BankAccount> bankAccount =
-            new EventSourcingRepository<>(
-                new GenericAggregateFactory<>(BankAccount.class), eventStore,
+            new CachingEventSourcingRepository<BankAccount>(
+                new GenericAggregateFactory<BankAccount>(BankAccount.class), eventStore, cache,
                 new EventCountSnapshotTriggerDefinition(snapshotter, 50));
+
+//        Repository<BankAccount> bankAccount =
+//            new EventSourcingRepository<BankAccount>(
+//                new GenericAggregateFactory<BankAccount>(BankAccount.class), eventStore,
+//                new EventCountSnapshotTriggerDefinition(snapshotter, 50));
 
 
         return bankAccount;
+    }
+
+    @Bean
+    public EhCacheAdapter ehCache(CacheManager cacheManager) {
+        return new EhCacheAdapter(cacheManager.getCache("testCache"));
+    }
+
+    @Bean
+    public EhCacheManagerFactoryBean ehCacheManagerFactoryBean() {
+        EhCacheManagerFactoryBean ehCacheManagerFactoryBean = new EhCacheManagerFactoryBean();
+        ehCacheManagerFactoryBean.setShared(true);
+
+        return ehCacheManagerFactoryBean;
     }
 
     @Bean

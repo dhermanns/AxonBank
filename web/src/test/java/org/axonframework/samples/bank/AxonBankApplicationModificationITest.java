@@ -25,7 +25,7 @@ public class AxonBankApplicationModificationITest {
 
     private Logger logger = LoggerFactory.getLogger(AxonBankApplicationModificationITest.class);
 
-    private int maxModifications = 100;
+    private int maxModifications = 1_000;
 
     @Autowired
     private CommandGateway commandGateway;
